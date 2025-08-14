@@ -48,8 +48,8 @@ try:
 
     st.sidebar.markdown("---")
     # TODO: Remember to replace with your actual information!
-    st.sidebar.markdown("Built by [Your Name Here]")
-    st.sidebar.markdown("[LinkedIn](https://www.linkedin.com/) | [GitHub](https://github.com/)")
+    st.sidebar.markdown("Built by Taksha Thosani")
+    st.sidebar.markdown("[LinkedIn](https://www.linkedin.com/in/taksha-thosani17) | [GitHub](https://github.com/taksha17)")
 
 
     # --- Main Page Content ---
