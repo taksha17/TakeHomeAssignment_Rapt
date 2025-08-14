@@ -56,8 +56,8 @@ X_multiple = sm.add_constant(X_multiple)
 y_multiple = df_dummies['revenue']
 
 # Sanity check of data types before fitting the model
-print("\nFinal data types for Multiple Regression:")
-print(X_multiple.dtypes)
+# print("\nFinal data types for Multiple Regression:")
+# print(X_multiple.dtypes)
 
 # Fitting the multiple regression model
 model_multiple = sm.OLS(y_multiple, X_multiple).fit()
