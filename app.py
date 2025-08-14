@@ -1,116 +1,114 @@
 # app.py
 import streamlit as st
-import numpy as np
+import pandas as pd
 import plotly.express as px
 
 # --- Page Configuration ---
 st.set_page_config(
-    page_title="Central Limit Theorem Demo",
-    page_icon="📊",
+    page_title="Raptive Interactive Analysis",
+    page_icon="📈",
     layout="wide"
 )
 
-# --- App Title and Description ---
-st.title("📊 Interactive Central Limit Theorem Demonstration")
-st.markdown("""
-The **Central Limit Theorem (CLT)** is a cornerstone of statistics. It states that if you take sufficiently large random samples from a population with any shape of distribution, the distribution of the *sample means* will approximate a normal distribution (a bell curve).
+# --- Data Loading and Caching ---
+# Use caching to prevent reloading data on every interaction
+@st.cache_data
+def load_data(path):
+    df = pd.read_csv(path)
+    # Perform the same cleaning as in your analysis
+    df['revenue'] = pd.to_numeric(df['revenue'], errors='coerce')
+    df['top'] = pd.to_numeric(df['top'], errors='coerce')
+    df.dropna(inplace=True)
+    return df
 
-**How to use this dashboard:**
-1.  **Choose a population distribution** from the sidebar. Notice that some are not bell-shaped at all!
-2.  **Adjust the sample size (n)**, which is how many data points are in each sample.
-3.  **Adjust the number of samples**, which is how many times we repeat the sampling experiment.
+df = load_data('testdata (1).csv')
 
-Watch how the histogram on the right, the *Distribution of Sample Means*, becomes more and more like a perfect bell curve as you increase the sample size, regardless of the original population's shape.
-""")
+# --- Sidebar ---
+st.sidebar.image("https://raptive.com/wp-content/uploads/2023/04/Raptive_Logo_wordmark_white.svg", width=200)
+st.sidebar.title("Interactive Dashboard")
+st.sidebar.markdown("This dashboard demonstrates how high-level trends can be misleading, a phenomenon known as **Simpson's Paradox**.")
+st.sidebar.markdown("---")
 
-# --- Sidebar Controls for User Input ---
-st.sidebar.header("⚙️ Dashboard Controls")
-
-dist_options = ['Uniform', 'Normal', 'Exponential', 'Bimodal']
-dist_choice = st.sidebar.selectbox(
-    "1. Choose a population distribution:",
-    options=dist_options
+# Create filters in the sidebar
+st.sidebar.header("📊 Segmentation Controls")
+selected_platforms = st.sidebar.multiselect(
+    'Filter by Platform:',
+    options=df['platform'].unique(),
+    default=df['platform'].unique() # Default to all selected
 )
 
-sample_size = st.sidebar.slider(
-    "2. Select the sample size (n):",
-    min_value=2,
-    max_value=500,
-    value=30, # A common starting value
-    step=1,
-    help="The number of data points to draw in each individual sample."
+selected_browsers = st.sidebar.multiselect(
+    'Filter by Browser:',
+    options=df['browser'].unique(),
+    default=df['browser'].unique() # Default to all selected
 )
 
-num_samples = st.sidebar.slider(
-    "3. Select the number of samples:",
-    min_value=100,
-    max_value=10000,
-    value=1000,
-    step=100,
-    help="The number of times the sampling experiment is repeated."
+# Filter the data based on selection
+filtered_df = df[df['platform'].isin(selected_platforms) & df['browser'].isin(selected_browsers)]
+
+st.sidebar.markdown("---")
+st.sidebar.markdown("Built by [Your Name Here]")
+st.sidebar.markdown("[LinkedIn](https://www.linkedin.com/) | [GitHub](https://github.com/)")
+
+
+# --- Main Page Content ---
+st.title("💡 Uncovering the Real Drivers of Revenue")
+st.markdown("An interactive analysis of Time on Page vs. Revenue.")
+st.markdown("---")
+
+# --- Part 1: The Misleading Overall Trend ---
+st.header("Part 1: The High-Level View (The Illusion)")
+st.markdown("At first glance, it appears that as users spend **more** time on a page, revenue **decreases**. The regression line below shows a clear negative correlation.")
+
+fig_overall = px.scatter(
+    df, x='top', y='revenue',
+    title="Overall Trend: Revenue vs. Time on Page",
+    trendline="ols", # Ordinary Least Squares regression line
+    color_discrete_sequence=['#6a0dad'] # A nice purple
 )
+fig_overall.update_layout(
+    xaxis_title="Time on Page",
+    yaxis_title="Revenue",
+    font=dict(family="sans-serif", size=12, color="#333")
+)
+st.plotly_chart(fig_overall, use_container_width=True)
 
-# --- Data Generation Logic ---
-
-# We'll create a large population to sample from
-population_size = 100000
-
-# Generate the population based on user's choice
-if dist_choice == 'Uniform':
-    # A flat distribution
-    population = np.random.uniform(0, 1, population_size)
-elif dist_choice == 'Normal':
-    # A standard bell curve
-    population = np.random.normal(0, 1, population_size)
-elif dist_choice == 'Exponential':
-    # A right-skewed distribution
-    population = np.random.exponential(1, population_size)
-elif dist_choice == 'Bimodal':
-    # A distribution with two peaks
-    pop1 = np.random.normal(-2, 0.5, population_size // 2)
-    pop2 = np.random.normal(2, 0.5, population_size // 2)
-    population = np.concatenate([pop1, pop2])
-
-# --- Sampling and Calculation ---
-# This is the core of the CLT demonstration
-# We perform the experiment 'num_samples' times
-sample_means = []
-for _ in range(num_samples):
-    # Draw a random sample from the population
-    sample = np.random.choice(population, size=sample_size)
-    # Calculate the mean of that sample and store it
-    sample_means.append(np.mean(sample))
+st.info("This initial finding is counter-intuitive. Let's dig deeper by segmenting the data.")
+st.markdown("---")
 
 
-# --- Visualization ---
-col1, col2 = st.columns(2)
+# --- Part 2: The Segmented, True Trend ---
+st.header("Part 2: The Segmented View (The Reality)")
+st.markdown("When we segment the data by **Platform** and **Browser**, the opposite story emerges. Within each specific user group, spending **more** time on page is positively correlated with **more** revenue.")
 
-with col1:
-    st.subheader("Population Distribution")
-    # Use Plotly for interactive and clean charts
-    fig1 = px.histogram(
-        population, 
-        nbins=100, 
-        title=f"Distribution of the '{dist_choice}' Population"
+if not filtered_df.empty:
+    # Create the segmented scatter plot
+    fig_segmented = px.scatter(
+        filtered_df,
+        x='top',
+        y='revenue',
+        color='platform',  # Color points by platform
+        symbol='browser',  # Use different symbols for browsers
+        title="Segmented Trend: Revenue vs. Time on Page",
+        trendline="ols",   # Show regression line for each segment
+        labels={'top': 'Time on Page', 'revenue': 'Revenue'}
     )
-    fig1.update_layout(showlegend=False, yaxis_title="Frequency", xaxis_title="Value")
-    st.plotly_chart(fig1, use_container_width=True)
+    fig_segmented.update_layout(
+        legend_title_text='Segments',
+        font=dict(family="sans-serif", size=12, color="#333")
+    )
+    st.plotly_chart(fig_segmented, use_container_width=True)
+    
+    st.success(
+        """
+        **Insight:** The negative trend was an illusion! It was caused by lower-revenue segments (like mobile users) also happening to have longer average session times. 
+        The real business driver is user engagement within each platform.
+        """
+    )
+    
+    # Show a snippet of the filtered data
+    with st.expander("View Filtered Data"):
+        st.dataframe(filtered_df.head(10))
+else:
+    st.warning("No data to display. Please select at least one Platform and Browser from the sidebar.")
 
-with col2:
-    st.subheader("Distribution of Sample Means")
-    fig2 = px.histogram(
-        sample_means, 
-        nbins=60, 
-        title=f"Distribution of {num_samples} Sample Means (Sample Size n={sample_size})"
-    )
-    # Overlay a vertical line at the true population mean for reference
-    fig2.add_vline(
-        x=np.mean(population), 
-        line_width=3, 
-        line_dash="dash", 
-        line_color="red",
-        annotation_text="Population Mean",
-        annotation_position="top right"
-    )
-    fig2.update_layout(showlegend=False, yaxis_title="Frequency", xaxis_title="Sample Mean Value")
-    st.plotly_chart(fig2, use_container_width=True)
