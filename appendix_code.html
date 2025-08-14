@@ -3,85 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analysis Code Appendix</title>
+    <title>"Analysis" Code_Appendix</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-okaidia.min.css" rel="stylesheet" />
     <style>
-        body { font-family: sans-serif; line-height: 1.6; margin: 40px; }
-        pre { background-color: #f4f4f4; padding: 20px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
-        code { font-family: 'Courier New', Courier, monospace; }
-        h2 { color: #333; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem;
+            background-color: #f8f9fa;
+            color: #212529;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background-color: #ffffff;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        h2 {
+            color: #343a40;
+            border-bottom: 2px solid #dee2e6;
+            padding-bottom: 0.5rem;
+        }
+        p {
+            color: #495057;
+        }
+        
+        .code-container {
+            position: relative;
+        }
+        
+        #copyButton {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background-color: #6c757d;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.2s;
+        }
+        #copyButton:hover {
+            background-color: #5a6268;
+        }
+        
+        pre[class*="language-"] {
+            padding: 1.5em;
+            margin-top: 0;
+            border-radius: 8px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
-    <h2>Python Code for Revenue and Time-on-Page Analysis</h2>
-    <p>This script uses the pandas, matplotlib, seaborn, and statsmodels libraries to perform the analysis and generate the visualizations.</p>
-    <pre><code>
+    <div class="container">
+        <h2>Python Code for Revenue and Time-on-Page Analysis</h2>
+        <p>This script uses the pandas, matplotlib, seaborn, and statsmodels libraries to perform the analysis and generate the visualizations. Click the button to copy the code.</p>
+        
+        <div class="code-container">
+            <button id="copyButton">Copy</button>
+            
+            <pre><code id="codeBlock" class="language-python">
 import pandas as pd
 import statsmodels.api as sm
 import matplotlib.pyplot as plt
 import seaborn as sns
+import numpy as np
 
-# Load the dataset
+# Loading the dataset
 file_path = 'testdata (1).csv'
 df = pd.read_csv(file_path)
 
-# --- Task 1: Describe the simple relationship between 'top' and 'revenue' ---
+# Section1: Initialzing with data cleaning and pre preparing the data dropping the rows with missing data
+df['revenue'] = pd.to_numeric(df['revenue'], errors='coerce')
+df['top'] = pd.to_numeric(df['top'], errors='coerce')
+df.dropna(inplace=True)
 
-# Set plot style
+#Seaction2: Trying to accomplish Task 1 
+#Task 1: Simple Linear Regression 
+print("--- Simple Linear Regression ---")
+
 sns.set_style("whitegrid")
-
-# 1a. Visualization
 plt.figure(figsize=(10, 6))
 sns.scatterplot(data=df, x='top', y='revenue', alpha=0.6)
-plt.title('Figure 1: Revenue vs. Time on Page', fontsize=16)
-plt.xlabel('Time on Page (top)', fontsize=12)
-plt.ylabel('Revenue', fontsize=12)
-# Save the figure to be embedded in the report
-plt.savefig('revenue_vs_top_scatterplot.png', dpi=300)
-# plt.show() # Uncomment to display plot if running locally
+plt.title('Figure 1: Revenue vs. Time on Page scatter graph', fontsize=10)
+plt.xlabel('Time on Page (Top)', fontsize=10)
+plt.ylabel('Revenue', fontsize=10)
+plt.savefig('revenue_vs_top_scatterplotgraph.png', dpi=300)
 
-print("--- Simple Linear Regression ---")
-# 1b. Statistical Analysis (Simple Linear Regression)
-# Define independent variable (X) and dependent variable (y)
-X_simple = df['top']
-X_simple = sm.add_constant(X_simple) # Adds an intercept (beta_0) to the model
+# Trying to fit and summarize the simple model
+X_simple = sm.add_constant(df['top'])
 y = df['revenue']
-
-# Fit the model
 model_simple = sm.OLS(y, X_simple).fit()
-
-# Print the summary
 print(model_simple.summary())
-print("\nKey takeaway from simple model:")
-print(f"The coefficient for 'top' is {model_simple.params['top']:.6f} with a p-value of {model_simple.pvalues['top']:.4f}.")
-print("This shows a statistically significant negative relationship.")
+#Task1 seems to be accomplished, the model's fitting in perfectly without errors
+#End of Section 1 
 
-
-# --- Task 2: Control for other variables ---
-
+#Section2: Trying to accomplish Task 2
+#Task 2: Multiple Linear Regression 
 print("\n--- Multiple Linear Regression ---")
-# Prepare data for multiple regression
-# 'site' is a number but should be treated as a category.
+
+#Convert 'site' to a category
 df['site'] = df['site'].astype('category')
 
-# Create dummy variables for categorical columns ('browser', 'platform', 'site')
-# drop_first=True to avoid multicollinearity
+# Create dummy variables for categorical columns
 df_dummies = pd.get_dummies(df, columns=['browser', 'platform', 'site'], drop_first=True)
 
-# Define independent variables (X) and dependent variable (y)
-# Include 'top' and the new dummy variables
-X_multiple = df_dummies[['top', 'browser_safari', 'platform_safari', 'site_2', 'site_3', 'site_4']]
-X_multiple = sm.add_constant(X_multiple) # Adds an intercept
+# Here the "pd.get_dummies create's columns with boolean data. While logically, this are same as working with 1's and 0's, 
+# but the my version of statsmodels library pops error as I might need to explicitly conver these into integer column's of 1's and 0's"
+# Lets identify the columns that are boolean and convert them
+for col in df_dummies.columns:
+    if df_dummies[col].dtype == 'bool':
+        df_dummies[col] = df_dummies[col].astype(int)
+
+# Defining independent and dependent variables
+X_multiple = df_dummies[['top', 'browser_safari', 'platform_mobile', 'site_2', 'site_3', 'site_4']]
+X_multiple = sm.add_constant(X_multiple)
 y_multiple = df_dummies['revenue']
 
-# Fit the multiple regression model
+# Sanity check of data types before fitting the model
+print("\nFinal data types for Multiple Regression:")
+print(X_multiple.dtypes)
+
+# Fitting the multiple regression model
 model_multiple = sm.OLS(y_multiple, X_multiple).fit()
 
-# Print the summary
+# Printing the final summary
 print(model_multiple.summary())
-print("\nKey takeaway from multiple model:")
-print(f"After controlling for other variables, the coefficient for 'top' is {model_multiple.params['top']:.6f} with a p-value of {model_multiple.pvalues['top']:.4f}.")
-print("The relationship remains negative and statistically significant.")
 
-    </code></pre>
+#Task 2 accomplished
+#End Of Section2
+            </code></pre>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <script>
+        
+        const copyButton = document.getElementById('copyButton');
+        const codeBlock = document.getElementById('codeBlock');
+
+        copyButton.addEventListener('click', () => {
+            
+            const codeToCopy = codeBlock.innerText;
+            
+            const tempTextArea = document.createElement('textarea');
+            tempTextArea.value = codeToCopy;
+            document.body.appendChild(tempTextArea);
+            tempTextArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempTextArea);
+
+            copyButton.innerText = 'Copied!';
+            copyButton.style.backgroundColor = '#28a745'; 
+            
+            setTimeout(() => {
+                copyButton.innerText = 'Copy';
+                copyButton.style.backgroundColor = '#6c757d';
+            }, 2000);
+        });
+    </script>
 </body>
 </html>
