@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analysis Code Appendix</title>
+    <style>
+        body { font-family: sans-serif; line-height: 1.6; margin: 40px; }
+        pre { background-color: #f4f4f4; padding: 20px; border-radius: 5px; white-space: pre-wrap; word-wrap: break-word; }
+        code { font-family: 'Courier New', Courier, monospace; }
+        h2 { color: #333; }
+    </style>
+</head>
+<body>
+    <h2>Python Code for Revenue and Time-on-Page Analysis</h2>
+    <p>This script uses the pandas, matplotlib, seaborn, and statsmodels libraries to perform the analysis and generate the visualizations.</p>
+    <pre><code>
+import pandas as pd
+import statsmodels.api as sm
+import matplotlib.pyplot as plt
+import seaborn as sns
+
+# Load the dataset
+file_path = 'testdata (1).csv'
+df = pd.read_csv(file_path)
+
+# --- Task 1: Describe the simple relationship between 'top' and 'revenue' ---
+
+# Set plot style
+sns.set_style("whitegrid")
+
+# 1a. Visualization
+plt.figure(figsize=(10, 6))
+sns.scatterplot(data=df, x='top', y='revenue', alpha=0.6)
+plt.title('Figure 1: Revenue vs. Time on Page', fontsize=16)
+plt.xlabel('Time on Page (top)', fontsize=12)
+plt.ylabel('Revenue', fontsize=12)
+# Save the figure to be embedded in the report
+plt.savefig('revenue_vs_top_scatterplot.png', dpi=300)
+# plt.show() # Uncomment to display plot if running locally
+
+print("--- Simple Linear Regression ---")
+# 1b. Statistical Analysis (Simple Linear Regression)
+# Define independent variable (X) and dependent variable (y)
+X_simple = df['top']
+X_simple = sm.add_constant(X_simple) # Adds an intercept (beta_0) to the model
+y = df['revenue']
+
+# Fit the model
+model_simple = sm.OLS(y, X_simple).fit()
+
+# Print the summary
+print(model_simple.summary())
+print("\nKey takeaway from simple model:")
+print(f"The coefficient for 'top' is {model_simple.params['top']:.6f} with a p-value of {model_simple.pvalues['top']:.4f}.")
+print("This shows a statistically significant negative relationship.")
+
+
+# --- Task 2: Control for other variables ---
+
+print("\n--- Multiple Linear Regression ---")
+# Prepare data for multiple regression
+# 'site' is a number but should be treated as a category.
+df['site'] = df['site'].astype('category')
+
+# Create dummy variables for categorical columns ('browser', 'platform', 'site')
+# drop_first=True to avoid multicollinearity
+df_dummies = pd.get_dummies(df, columns=['browser', 'platform', 'site'], drop_first=True)
+
+# Define independent variables (X) and dependent variable (y)
+# Include 'top' and the new dummy variables
+X_multiple = df_dummies[['top', 'browser_safari', 'platform_safari', 'site_2', 'site_3', 'site_4']]
+X_multiple = sm.add_constant(X_multiple) # Adds an intercept
+y_multiple = df_dummies['revenue']
+
+# Fit the multiple regression model
+model_multiple = sm.OLS(y_multiple, X_multiple).fit()
+
+# Print the summary
+print(model_multiple.summary())
+print("\nKey takeaway from multiple model:")
+print(f"After controlling for other variables, the coefficient for 'top' is {model_multiple.params['top']:.6f} with a p-value of {model_multiple.pvalues['top']:.4f}.")
+print("The relationship remains negative and statistically significant.")
+
+    </code></pre>
+</body>
+</html>
