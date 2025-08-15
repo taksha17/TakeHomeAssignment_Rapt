@@ -6,7 +6,7 @@ import plotly.express as px
 # --- Page Configuration ---
 st.set_page_config(
     page_title="Raptive Interactive Analysis",
-    page_icon="cafemedia_logo.jpg",
+    page_icon="cafemedia_logo.jpeg",
     # page_icon="📈",
     layout="wide"
 )
@@ -25,7 +25,7 @@ try:
     df = load_data('testdata (1).csv')
 
     # --- Sidebar ---
-    st.sidebar.image("cafemedia_logo.jpg", width=200)
+    st.sidebar.image("cafemedia_logo.jpeg", width=200)
     st.sidebar.title("Interactive Dashboard")
     st.sidebar.markdown("This dashboard demonstrates how high-level trends can be misleading, a phenomenon known as **Simpson's Paradox**.")
     st.sidebar.markdown("---")
