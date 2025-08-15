@@ -25,7 +25,7 @@ try:
     df = load_data('testdata (1).csv')
 
     # --- Sidebar ---
-    st.sidebar.image("cafemedia_logo.jpeg", width=200)
+    st.sidebar.image("Raptive_logo.jpeg", width=200)
     st.sidebar.title("Interactive Dashboard")
     st.sidebar.markdown("This dashboard demonstrates how high-level trends can be misleading, a phenomenon known as **Simpson's Paradox**.")
     st.sidebar.markdown("---")
